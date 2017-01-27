@@ -123,17 +123,25 @@ public class CommandProcessor extends AbstractPublishingProcessor {
      * @return true if matching or no match pattern is set
      */
     protected boolean isMatchingPattern(String file) {
-        if (getMatchPatterns() != null) {
+        boolean result = false;
+        if (getMatchPatterns() != null && getMatchPatterns().size() > 0) {
             for (String matchPattern : getMatchPatterns()) {
                 if (file.matches(matchPattern)) {
-                    System.out.println(file + " matched " + matchPattern);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(file + " matched " + matchPattern);
+                    }
                     return true;
                 } else {
-                    System.out.println(file + " didn't match " + matchPattern);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(file + " didn't match " + matchPattern);
+                    }
                 }
             }
+        } else {
+            // if no match pattern specified, it's match all
+            result = true;
         }
-        return true;
+        return result;
     }
 
     public String getCommand() {
