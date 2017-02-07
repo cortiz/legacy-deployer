@@ -31,6 +31,22 @@
             </releases>
         </repository>
     </repositories>
+         
+             <developers>
+        <developer>
+            <id>sumerjabri</id>
+            <name>Sumer Jabri</name>
+            <email>sumer.jabri@craftercms.org</email>
+        </developer>
+        <developer>
+            <id>dejanbrkic</id>
+            <name>Dejan Brkic</name>
+            <email>dejan.brkic@craftercms.org</email>
+        </developer>
+    </developers>
+
+         
+         
     <licenses>
         <license>
             <name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
