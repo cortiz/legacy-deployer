@@ -12,7 +12,9 @@
     <!--			 Properties			  -->
     <!-- 								  -->
     <!-- //////////////////////////////// -->
-    
+
+    <import resource="classpath:crafter/core/core-context.xml" />
+
     <bean name="cstudioPublishingReceiverProperties"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
