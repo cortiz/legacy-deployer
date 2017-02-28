@@ -3,7 +3,6 @@ package org.craftercms.cstudio.publishing.processor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.craftercms.commons.lang.RegexUtils;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -12,17 +11,13 @@ import org.springframework.beans.factory.annotation.Required;
 import java.util.*;
 
 /**
- * {@link PublishingProcessor} decorator that skips files based on the path patterns.
+ * Base {@link PublishingProcessor} that excludes files from indexing.
  * @author joseross
  */
-public class FilterByPathProcessor extends AbstractPublishingProcessor {
+public abstract class AbstractExcludeProcessor extends AbstractPublishingProcessor {
 
-    private static final Log logger = LogFactory.getLog(FilterByPathProcessor.class);
 
-    /**
-     * Array of patterns to skip.
-     */
-    protected String[] filteredPaths;
+    private static final Log logger = LogFactory.getLog(AbstractExcludeProcessor.class);
 
     /**
      * Actual processor to execute on the filtered files.
@@ -30,20 +25,22 @@ public class FilterByPathProcessor extends AbstractPublishingProcessor {
     protected PublishingProcessor actualProcessor;
 
     @Required
-    public void setFilteredPaths(String[] filteredPaths) {
-        this.filteredPaths = filteredPaths;
-    }
-
-    @Required
     public void setActualProcessor(PublishingProcessor actualProcessor) {
         this.actualProcessor = actualProcessor;
     }
 
-    protected void filterFiles(List<String> files) {
+    /**
+     * This method will define if a file is excluded or not.
+     * @param file
+     * @return
+     */
+    protected abstract boolean excludeFile(String file);
+
+    protected void excludeFiles(List<String> files) {
         Iterator<String> iterator = files.iterator();
         while(iterator.hasNext()) {
             String file = iterator.next();
-            if(RegexUtils.matchesAny(file, filteredPaths)) {
+            if(excludeFile(file)) {
                 iterator.remove();
             }
         }
@@ -55,9 +52,9 @@ public class FilterByPathProcessor extends AbstractPublishingProcessor {
         List<String> updatedFiles = copyFileList(changeSet.getUpdatedFiles());
         List<String> deletedFiles = copyFileList(changeSet.getDeletedFiles());
 
-        filterFiles(createdFiles);
-        filterFiles(updatedFiles);
-        filterFiles(deletedFiles);
+        excludeFiles(createdFiles);
+        excludeFiles(updatedFiles);
+        excludeFiles(deletedFiles);
 
         if(CollectionUtils.isNotEmpty(createdFiles) ||
             CollectionUtils.isNotEmpty(updatedFiles) ||
@@ -78,13 +75,7 @@ public class FilterByPathProcessor extends AbstractPublishingProcessor {
 
     }
 
-    @Override
-    public String getName() {
-        return FilterByPathProcessor.class.getSimpleName();
-    }
-
     protected List<String> copyFileList(List<String> files) {
         return CollectionUtils.isNotEmpty(files)? new ArrayList<>(files) : Collections.<String>emptyList();
     }
-
 }
