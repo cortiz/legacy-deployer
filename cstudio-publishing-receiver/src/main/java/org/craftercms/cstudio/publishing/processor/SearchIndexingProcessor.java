@@ -34,12 +34,12 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
     protected String defaultIndexIdFormat;
     protected boolean ignoreIndexId;
     protected String siteName;
-    protected SearchService searchService;
-    protected List<BatchIndexer> batchIndexers;
-
     protected String targetFolderUrl;
+    protected SearchService searchService;
     protected ContentStoreService contentStoreService;
     protected Context context;
+    protected List<BatchIndexer> batchIndexers;
+
 
     public SearchIndexingProcessor() {
         defaultIndexIdFormat = DEFAULT_DEFAULT_INDEX_ID_FORMAT;
