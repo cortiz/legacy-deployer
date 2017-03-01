@@ -19,8 +19,8 @@ package org.craftercms.cstudio.publishing.processor;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.craftercms.search.batch.utils.xml.DocumentProcessor;
-import org.craftercms.search.batch.utils.xml.FlatteningDocumentProcessor;
+import org.craftercms.core.processors.ItemProcessor;
+import org.craftercms.core.processors.impl.IncludeDescriptorsProcessor;
 
 /**
  * @deprecated replaced by {@link SearchIndexingProcessor}
@@ -30,6 +30,7 @@ public class SearchUpdateFlattenXmlProcessor extends SearchUpdateProcessor {
 
     protected String includeElementXPathQuery;
     protected String disableFlatteningElement;
+
     private boolean disableNestedPageFlattening;
 
     public String getIncludeElementXPathQuery() {
@@ -53,17 +54,15 @@ public class SearchUpdateFlattenXmlProcessor extends SearchUpdateProcessor {
     }
 
     @Override
-    protected List<DocumentProcessor> createDocumentProcessorChain(List<DocumentProcessor> chain) {
-        FlatteningDocumentProcessor processor = new FlatteningDocumentProcessor();
+    protected List<ItemProcessor> createDocumentProcessorChain(List<ItemProcessor> chain) {
+        IncludeDescriptorsProcessor processor = new IncludeDescriptorsProcessor();
 
         if (StringUtils.isNotEmpty(includeElementXPathQuery)) {
             processor.setIncludeElementXPathQuery(includeElementXPathQuery);
         }
         if (StringUtils.isNotEmpty(disableFlatteningElement)) {
-            processor.setDisableFlatteningElement(disableFlatteningElement);
+            processor.setDisabledIncludeNodeXPathQuery(disableFlatteningElement);
         }
-
-        processor.setDisableNestedPageFlattening(disableNestedPageFlattening);
 
         chain.add(processor);
 

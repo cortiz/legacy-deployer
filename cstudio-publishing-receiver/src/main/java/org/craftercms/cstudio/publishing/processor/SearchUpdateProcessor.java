@@ -16,30 +16,32 @@
  */
 package org.craftercms.cstudio.publishing.processor;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.CharEncoding;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.processors.ItemProcessor;
+import org.craftercms.core.processors.impl.FieldRenamingProcessor;
+import org.craftercms.core.processors.impl.ItemProcessorPipeline;
+import org.craftercms.core.service.ContentStoreService;
+import org.craftercms.core.service.Context;
+import org.craftercms.core.service.Item;
+import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
-import org.craftercms.search.batch.utils.XmlUtils;
-import org.craftercms.search.batch.utils.xml.DocumentProcessor;
-import org.craftercms.search.batch.utils.xml.DocumentProcessorChain;
-import org.craftercms.search.batch.utils.xml.FieldRenamingDocumentProcessor;
 import org.craftercms.search.service.SearchService;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Required;
+
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Processor to update the Crafter Search engine index.
@@ -56,7 +58,11 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
     protected String siteName;
     protected Map<String, String> fieldMappings;
     private String charEncoding = CharEncoding.UTF_8;
-    protected DocumentProcessor documentProcessor;
+    protected ItemProcessor documentProcessor;
+
+    protected String targetFolderUrl;
+    protected ContentStoreService contentStoreService;
+    protected Context context;
 
     @Required
     public void setSearchService(SearchService searchService) {
@@ -96,51 +102,62 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         // Ignore, now this functionality is done by the server
     }
 
-    public void setDocumentProcessor(DocumentProcessor documentProcessor) {
+    public void setDocumentProcessor(ItemProcessor documentProcessor) {
         this.documentProcessor = documentProcessor;
+    }
+
+    @Required
+    public void setTargetFolderUrl(String targetFolderUrl) {
+        this.targetFolderUrl = targetFolderUrl;
+    }
+
+    @Required
+    public void setContentStoreService(ContentStoreService contentStoreService) {
+        this.contentStoreService = contentStoreService;
+    }
+
+    @PostConstruct
+    public void destroy() {
+        contentStoreService.destroyContext(context);
     }
 
     @PostConstruct
     public void init() {
-        if (documentProcessor == null) {
-            List<DocumentProcessor> chain = createDocumentProcessorChain(new ArrayList<DocumentProcessor>());
+        context = contentStoreService.createContext(
+            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, targetFolderUrl, false, 0,
+            Context.DEFAULT_IGNORE_HIDDEN_FILES);
 
-            documentProcessor = new DocumentProcessorChain(chain);
+        if (documentProcessor == null) {
+            List<ItemProcessor> chain = createDocumentProcessorChain(new ArrayList<ItemProcessor>());
+
+            documentProcessor = new ItemProcessorPipeline(chain);
         }
     }
 
     @Override
     public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
                           PublishingTarget target) throws PublishingException {
-        String root = target.getParameter(FileUploadServlet.CONFIG_ROOT);
-        String contentFolder = target.getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER);
         String siteId = (!StringUtils.isEmpty(siteName))? siteName: parameters.get(FileUploadServlet.PARAM_SITE);
-
-        root += "/" + contentFolder;
-
-        if (StringUtils.isNotBlank(siteId)) {
-            root = root.replaceAll(FileUploadServlet.CONFIG_MULTI_TENANCY_VARIABLE, siteId);
-        }
 
         List<String> createdFiles = changeSet.getCreatedFiles();
         List<String> updatedFiles = changeSet.getUpdatedFiles();
         List<String> deletedFiles = changeSet.getDeletedFiles();
 
         if (CollectionUtils.isNotEmpty(createdFiles)) {
-            update(siteId, root, createdFiles, false);
+            update(siteId, createdFiles, false);
         }
         if (CollectionUtils.isNotEmpty(updatedFiles)) {
-            update(siteId, root, updatedFiles, false);
+            update(siteId, updatedFiles, false);
         }
         if (CollectionUtils.isNotEmpty(deletedFiles)) {
-            update(siteId, root, deletedFiles, true);
+            update(siteId, deletedFiles, true);
         }
 
         searchService.commit();
     }
 
-    protected List<DocumentProcessor> createDocumentProcessorChain(List<DocumentProcessor> chain) {
-        FieldRenamingDocumentProcessor processor = new FieldRenamingDocumentProcessor();
+    protected List<ItemProcessor> createDocumentProcessorChain(List<ItemProcessor> chain) {
+        FieldRenamingProcessor processor = new FieldRenamingProcessor();
         if (MapUtils.isNotEmpty(fieldMappings)) {
             processor.setFieldMappings(fieldMappings);
         }
@@ -150,7 +167,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         return chain;
     }
 
-    protected void update(String siteId, String root, List<String> fileNames,
+    protected void update(String siteId, List<String> fileNames,
                           boolean delete) throws PublishingException {
         for (String fileName : fileNames) {
             if (fileName.endsWith(".xml")) {
@@ -163,7 +180,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
                         }
                     } else {
                         try {
-                            String xml = processXml(root, fileName);
+                            String xml = processXml(fileName);
 
                             searchService.update(siteId, fileName, xml, true);
 
@@ -182,10 +199,10 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         }
     }
 
-    protected String processXml(String root, String fileName) throws DocumentException {
-        File file = new File(root + fileName);
+    protected String processXml(String fileName) throws DocumentException {
+        Item item = contentStoreService.getItem(context, fileName);
 
-        Document document = processDocument(XmlUtils.readXml(file, charEncoding), file, root);
+        Document document = processDocument(item);
         String xml = document.asXML();
 
         if (logger.isDebugEnabled()) {
@@ -196,9 +213,10 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         return xml;
     }
 
-    protected Document processDocument(Document document, File file, String root) throws DocumentException {
-        return documentProcessor.process(document, file, root);
+    protected Document processDocument(Item item) throws DocumentException {
+        return documentProcessor.process(context, null, item).getDescriptorDom();
     }
+
 
 }
 

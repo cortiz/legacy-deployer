@@ -1,19 +1,23 @@
 package org.craftercms.cstudio.publishing.processor;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.craftercms.commons.lang.UrlUtils;
+import org.craftercms.core.service.ContentStoreService;
+import org.craftercms.core.service.Context;
+import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
 import org.craftercms.search.batch.BatchIndexer;
+import org.craftercms.search.batch.IndexingStatus;
 import org.craftercms.search.service.SearchService;
 import org.springframework.beans.factory.annotation.Required;
+
+import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * {@link PublishingProcessor} that uses a list of {@link BatchIndexer}s to update a Crafter Search index. This
@@ -29,8 +33,12 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
     protected String defaultIndexIdFormat;
     protected boolean ignoreIndexId;
     protected String siteName;
+    protected String targetFolderUrl;
     protected SearchService searchService;
+    protected ContentStoreService contentStoreService;
+    protected Context context;
     protected List<BatchIndexer> batchIndexers;
+
 
     public SearchIndexingProcessor() {
         defaultIndexIdFormat = DEFAULT_DEFAULT_INDEX_ID_FORMAT;
@@ -65,6 +73,29 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
         this.batchIndexers = batchIndexers;
     }
 
+
+    @Required
+    public void setTargetFolderUrl(String targetFolderUrl) {
+        this.targetFolderUrl = targetFolderUrl;
+    }
+
+    @Required
+    public void setContentStoreService(ContentStoreService contentStoreService) {
+        this.contentStoreService = contentStoreService;
+    }
+
+    @PostConstruct
+    public void init() {
+        context = contentStoreService.createContext(
+            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, targetFolderUrl, false, 0,
+            Context.DEFAULT_IGNORE_HIDDEN_FILES);
+    }
+
+    @PostConstruct
+    public void destroy() {
+        contentStoreService.destroyContext(context);
+    }
+
     @Override
     public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
                           PublishingTarget target) throws PublishingException {
@@ -72,17 +103,10 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
             throw new IllegalStateException("At least one batch indexer should be provided");
         }
 
-        String rootFolder = target.getParameter(FileUploadServlet.CONFIG_ROOT);
-        String contentFolder = target.getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER);
         String siteName = getActualSiteId(parameters);
         String indexId = getActualIndexId(siteName);
-        int updateCount = 0;
+        IndexingStatus indexingStatus = new IndexingStatus();
 
-        rootFolder = UrlUtils.concat(rootFolder, contentFolder);
-
-        if (StringUtils.isNotBlank(siteName)) {
-            rootFolder = rootFolder.replaceAll(FileUploadServlet.CONFIG_MULTI_TENANCY_VARIABLE, siteName);
-        }
 
         List<String> createdFiles = changeSet.getCreatedFiles();
         List<String> updatedFiles = changeSet.getUpdatedFiles();
@@ -90,21 +114,21 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
 
         if (CollectionUtils.isNotEmpty(createdFiles)) {
             for (BatchIndexer indexer : batchIndexers) {
-                updateCount += indexer.updateIndex(indexId, siteName, rootFolder, createdFiles, false);
+                indexer.updateIndex(indexId, siteName, contentStoreService, context, createdFiles, false, indexingStatus);
             }
         }
         if (CollectionUtils.isNotEmpty(updatedFiles)) {
             for (BatchIndexer indexer : batchIndexers) {
-                updateCount += indexer.updateIndex(indexId, siteName, rootFolder, updatedFiles, false);
+                indexer.updateIndex(indexId, siteName, contentStoreService, context, updatedFiles, false, indexingStatus);
             }
         }
         if (CollectionUtils.isNotEmpty(deletedFiles)) {
             for (BatchIndexer indexer : batchIndexers) {
-                updateCount += indexer.updateIndex(indexId, siteName, rootFolder, deletedFiles, true);
+                indexer.updateIndex(indexId, siteName, contentStoreService, context, deletedFiles, true, indexingStatus);
             }
         }
 
-        if (updateCount > 0) {
+        if (indexingStatus.getAttemptedUpdatesAndDeletes() > 0) {
             searchService.commit(indexId);
         }
     }

@@ -78,7 +78,7 @@ public class OnPathMatchConditionalProcessor extends AbstractPublishingProcessor
                 PublishedChangeSet newChangeSet = new PublishedChangeSet();
                 newChangeSet.setCreatedFiles(matchedCreatedFiles);
                 newChangeSet.setUpdatedFiles(matchedUpdatedFiles);
-                newChangeSet.setDeletedFiles(deletedFiles);
+                newChangeSet.setDeletedFiles(matchedDeletedFiles);
 
                 if (logger.isDebugEnabled()) {
                     logger.debug("Executing publishing processor " + processor.getName() + " for " + newChangeSet);
