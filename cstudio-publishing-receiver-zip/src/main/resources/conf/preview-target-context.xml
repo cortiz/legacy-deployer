@@ -28,17 +28,25 @@
         </property>
     </bean>
 
+    <bean id="PreviewTargetContext" class="org.craftercms.cstudio.publishing.target.TargetContext">
+        <property name="contentStoreService" ref="crafter.contentStoreService"/>
+        <property name="targetFolderUrl" value="target/preview/content/wem-projects/{siteId}/{siteId}/work-area"/>
+    </bean>
+
     <bean id="PreviewSearchProcessor" class="org.craftercms.cstudio.publishing.processor.SearchUpdateProcessor">
 		<property name="searchService" ref="PreviewSearchService"/>
+        <property name="targetContext" ref="PreviewTargetContext"/>
         <!-- do NOT set SITENAME for preview or when you want authoring to control the site name in index -->
 		<!--property name="siteName"><value>SITENAME</value></property-->
 	</bean>
 	
     <bean id="PreviewSearchFlattenXmlProcessor" class="org.craftercms.cstudio.publishing.processor.SearchUpdateFlattenXmlProcessor">
 		<property name="searchService" ref="PreviewSearchService"/>
+        <property name="targetContext" ref="PreviewTargetContext"/>
         <!-- do NOT set SITENAME for preview or when you want authoring to control the site name in index -->
         <!--property name="siteName"><value>SITENAME</value></property-->
 		<property name="includeElementXPathQuery" value="//include" />
+        <property name="disableFlatteningElement" value="//disable-flattening" />
 	</bean>
 	
     <bean id="PreviewSearchAttachmentProcessor" class="org.craftercms.cstudio.publishing.processor.SearchAttachmentProcessor">

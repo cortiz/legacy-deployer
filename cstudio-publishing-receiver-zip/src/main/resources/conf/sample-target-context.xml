@@ -32,6 +32,11 @@
 		<property name="defaultProcessingEnabled" value="false"/>
 	</bean>
 
+	<bean id="SampleTargetContext" class="org.craftercms.cstudio.publishing.target.TargetContext">
+		<property name="contentStoreService" ref="crafter.contentStoreService"/>
+		<property name="targetFolderUrl" value="/target/sample/content"/>
+	</bean>
+
 	<bean id="sampleCacheInvalidate"
 		class="org.craftercms.cstudio.publishing.processor.CacheInvalidatePostProcessor">
 		<property name="cacheInvalidateUrl" value="http://localhost:9292/api/1/cache/clear_all" />
@@ -40,6 +45,7 @@
 	<bean id="searchProcessor"
 		class="org.craftercms.cstudio.publishing.processor.SearchUpdateProcessor">
 		<property name="searchService" ref="SearchService" />
+		<property name="targetContext" ref="SampleTargetContext"/>
 		<property name="siteName">
 			<value>sample</value>
 		</property>
@@ -56,6 +62,7 @@
 	<bean id="searchFlattenXmlProcessor"
 		class="org.craftercms.cstudio.publishing.processor.SearchUpdateFlattenXmlProcessor">
 		<property name="searchService" ref="SearchService" />
+		<property name="targetContext" ref="SampleTargetContext"/>
 		<property name="siteName">
 			<value>sample</value>
 		</property>

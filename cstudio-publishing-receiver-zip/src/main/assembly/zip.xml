@@ -19,7 +19,7 @@
       		<unpack>false</unpack>
 			<scope>runtime</scope>
 			<excludes>
-				<exclude>org.craftercms.crafter-studio:cstudio-publishing-receiver-zip</exclude>
+				<exclude>org.craftercms:crafter-studio-publishing-receiver-zip</exclude>
 			</excludes>
 		</dependencySet>
 	</dependencySets>
