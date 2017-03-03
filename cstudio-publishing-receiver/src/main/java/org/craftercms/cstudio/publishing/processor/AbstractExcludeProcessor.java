@@ -34,13 +34,13 @@ public abstract class AbstractExcludeProcessor extends AbstractPublishingProcess
      * @param file
      * @return
      */
-    protected abstract boolean excludeFile(String file);
+    protected abstract boolean excludeFile(String file, Map<String, String> parameters);
 
-    protected void excludeFiles(List<String> files) {
+    protected void excludeFiles(List<String> files, Map<String, String> parameters) {
         Iterator<String> iterator = files.iterator();
         while(iterator.hasNext()) {
             String file = iterator.next();
-            if(excludeFile(file)) {
+            if(excludeFile(file, parameters)) {
                 iterator.remove();
             }
         }
@@ -52,9 +52,10 @@ public abstract class AbstractExcludeProcessor extends AbstractPublishingProcess
         List<String> updatedFiles = copyFileList(changeSet.getUpdatedFiles());
         List<String> deletedFiles = copyFileList(changeSet.getDeletedFiles());
 
-        excludeFiles(createdFiles);
-        excludeFiles(updatedFiles);
-        excludeFiles(deletedFiles);
+        excludeFiles(createdFiles, parameters);
+        excludeFiles(updatedFiles, parameters);
+        // The file is already deleted so there is nothing to check...
+        //excludeFiles(deletedFiles, parameters);
 
         if(CollectionUtils.isNotEmpty(createdFiles) ||
             CollectionUtils.isNotEmpty(updatedFiles) ||
