@@ -34,7 +34,7 @@
 
 	<bean id="SampleTargetContext" class="org.craftercms.cstudio.publishing.target.TargetContext">
 		<property name="contentStoreService" ref="crafter.contentStoreService"/>
-		<property name="targetFolderUrl" value="/target/sample/content"/>
+		<property name="targetFolderUrl" value="target/sample/content"/>
 	</bean>
 
 	<bean id="sampleCacheInvalidate"
