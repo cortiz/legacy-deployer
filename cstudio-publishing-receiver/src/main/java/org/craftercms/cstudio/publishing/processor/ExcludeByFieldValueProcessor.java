@@ -5,10 +5,10 @@ import org.craftercms.commons.lang.RegexUtils;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
-import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
+import org.craftercms.cstudio.publishing.target.TargetContext;
 import org.springframework.beans.factory.annotation.Required;
 
-import javax.annotation.PostConstruct;
+import java.util.Map;
 
 /**
  * {@link PublishingProcessor} decorator that excludes files based on the value of a field.
@@ -26,9 +26,7 @@ public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
      */
     protected String[] excludedValues;
 
-    protected String targetFolderUrl;
-    protected ContentStoreService contentStoreService;
-    protected Context context;
+    protected TargetContext targetContext;
 
     @Required
     public void setFieldName(String fieldName) {
@@ -41,29 +39,15 @@ public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
     }
 
     @Required
-    public void setTargetFolderUrl(String targetFolderUrl) {
-        this.targetFolderUrl = targetFolderUrl;
-    }
-
-    @Required
-    public void setContentStoreService(ContentStoreService contentStoreService) {
-        this.contentStoreService = contentStoreService;
-    }
-
-    @PostConstruct
-    public void init() {
-        context = contentStoreService.createContext(
-            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, targetFolderUrl, false, 0,
-            Context.DEFAULT_IGNORE_HIDDEN_FILES);
-    }
-
-    @PostConstruct
-    public void destroy() {
-        contentStoreService.destroyContext(context);
+    public void setTargetContext(TargetContext targetContext) {
+        this.targetContext = targetContext;
     }
 
     @Override
-    protected boolean excludeFile(String file) {
+    protected boolean excludeFile(String file, Map<String, String> parameters) {
+        ContentStoreService contentStoreService = targetContext.getContentStoreService();
+        Context context = targetContext.getContext(parameters);
+
         Item item = contentStoreService.getItem(context, file);
         if(item != null) {
             String fieldValue = item.queryDescriptorValue(fieldName);
@@ -71,6 +55,9 @@ public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
                 return RegexUtils.matchesAny(fieldValue, excludedValues);
             }
         }
+
+        targetContext.destroyContext(parameters);
+
         return false;
     }
 

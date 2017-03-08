@@ -9,6 +9,7 @@ import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
+import org.craftercms.cstudio.publishing.target.TargetContext;
 import org.craftercms.search.batch.BatchIndexer;
 import org.craftercms.search.batch.IndexingStatus;
 import org.craftercms.search.service.SearchService;
@@ -33,12 +34,10 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
     protected String defaultIndexIdFormat;
     protected boolean ignoreIndexId;
     protected String siteName;
-    protected String targetFolderUrl;
     protected SearchService searchService;
-    protected ContentStoreService contentStoreService;
-    protected Context context;
     protected List<BatchIndexer> batchIndexers;
 
+    protected TargetContext targetContext;
 
     public SearchIndexingProcessor() {
         defaultIndexIdFormat = DEFAULT_DEFAULT_INDEX_ID_FORMAT;
@@ -61,6 +60,11 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
     }
 
     @Required
+    public void setTargetContext(TargetContext targetContext) {
+        this.targetContext = targetContext;
+    }
+
+    @Required
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
     }
@@ -71,29 +75,6 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
 
     public void setBatchIndexers(List<BatchIndexer> batchIndexers) {
         this.batchIndexers = batchIndexers;
-    }
-
-
-    @Required
-    public void setTargetFolderUrl(String targetFolderUrl) {
-        this.targetFolderUrl = targetFolderUrl;
-    }
-
-    @Required
-    public void setContentStoreService(ContentStoreService contentStoreService) {
-        this.contentStoreService = contentStoreService;
-    }
-
-    @PostConstruct
-    public void init() {
-        context = contentStoreService.createContext(
-            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, targetFolderUrl, false, 0,
-            Context.DEFAULT_IGNORE_HIDDEN_FILES);
-    }
-
-    @PostConstruct
-    public void destroy() {
-        contentStoreService.destroyContext(context);
     }
 
     @Override
@@ -107,6 +88,8 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
         String indexId = getActualIndexId(siteName);
         IndexingStatus indexingStatus = new IndexingStatus();
 
+        ContentStoreService contentStoreService = targetContext.getContentStoreService();
+        Context context = targetContext.getContext(parameters);
 
         List<String> createdFiles = changeSet.getCreatedFiles();
         List<String> updatedFiles = changeSet.getUpdatedFiles();
@@ -131,6 +114,8 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
         if (indexingStatus.getAttemptedUpdatesAndDeletes() > 0) {
             searchService.commit(indexId);
         }
+
+        targetContext.destroyContext(parameters);
     }
 
     protected String getActualSiteId(Map<String, String> parameters) {

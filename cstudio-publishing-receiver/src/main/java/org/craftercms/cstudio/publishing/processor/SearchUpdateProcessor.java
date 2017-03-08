@@ -28,11 +28,11 @@ import org.craftercms.core.processors.impl.ItemProcessorPipeline;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
-import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
+import org.craftercms.cstudio.publishing.target.TargetContext;
 import org.craftercms.search.service.SearchService;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -60,9 +60,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
     private String charEncoding = CharEncoding.UTF_8;
     protected ItemProcessor documentProcessor;
 
-    protected String targetFolderUrl;
-    protected ContentStoreService contentStoreService;
-    protected Context context;
+    protected TargetContext targetContext;
 
     @Required
     public void setSearchService(SearchService searchService) {
@@ -107,26 +105,12 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
     }
 
     @Required
-    public void setTargetFolderUrl(String targetFolderUrl) {
-        this.targetFolderUrl = targetFolderUrl;
-    }
-
-    @Required
-    public void setContentStoreService(ContentStoreService contentStoreService) {
-        this.contentStoreService = contentStoreService;
-    }
-
-    @PostConstruct
-    public void destroy() {
-        contentStoreService.destroyContext(context);
+    public void setTargetContext(TargetContext targetContext) {
+        this.targetContext = targetContext;
     }
 
     @PostConstruct
     public void init() {
-        context = contentStoreService.createContext(
-            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, targetFolderUrl, false, 0,
-            Context.DEFAULT_IGNORE_HIDDEN_FILES);
-
         if (documentProcessor == null) {
             List<ItemProcessor> chain = createDocumentProcessorChain(new ArrayList<ItemProcessor>());
 
@@ -144,13 +128,13 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         List<String> deletedFiles = changeSet.getDeletedFiles();
 
         if (CollectionUtils.isNotEmpty(createdFiles)) {
-            update(siteId, createdFiles, false);
+            update(siteId, createdFiles, parameters, false);
         }
         if (CollectionUtils.isNotEmpty(updatedFiles)) {
-            update(siteId, updatedFiles, false);
+            update(siteId, updatedFiles, parameters, false);
         }
         if (CollectionUtils.isNotEmpty(deletedFiles)) {
-            update(siteId, deletedFiles, true);
+            update(siteId, deletedFiles, parameters, true);
         }
 
         searchService.commit();
@@ -167,7 +151,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         return chain;
     }
 
-    protected void update(String siteId, List<String> fileNames,
+    protected void update(String siteId, List<String> fileNames, Map<String, String> parameters,
                           boolean delete) throws PublishingException {
         for (String fileName : fileNames) {
             if (fileName.endsWith(".xml")) {
@@ -180,7 +164,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
                         }
                     } else {
                         try {
-                            String xml = processXml(fileName);
+                            String xml = processXml(fileName, parameters);
 
                             searchService.update(siteId, fileName, xml, true);
 
@@ -199,10 +183,13 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         }
     }
 
-    protected String processXml(String fileName) throws DocumentException {
+    protected String processXml(String fileName, Map<String, String> parameters) throws DocumentException {
+        ContentStoreService contentStoreService = targetContext.getContentStoreService();
+        Context context = targetContext.getContext(parameters);
+
         Item item = contentStoreService.getItem(context, fileName);
 
-        Document document = processDocument(item);
+        Document document = processDocument(item, context);
         String xml = document.asXML();
 
         if (logger.isDebugEnabled()) {
@@ -210,10 +197,12 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
             logger.debug(xml);
         }
 
+        targetContext.destroyContext(parameters);
+
         return xml;
     }
 
-    protected Document processDocument(Item item) throws DocumentException {
+    protected Document processDocument(Item item, Context context) throws DocumentException {
         return documentProcessor.process(context, null, item).getDescriptorDom();
     }
 
