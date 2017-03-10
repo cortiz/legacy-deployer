@@ -186,18 +186,23 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
     protected String processXml(String fileName, Map<String, String> parameters) throws DocumentException {
         ContentStoreService contentStoreService = targetContext.getContentStoreService();
         Context context = targetContext.getContext(parameters);
+        String xml = null;
 
-        Item item = contentStoreService.getItem(context, fileName);
+        try {
+            Item item = contentStoreService.getItem(context, fileName);
 
-        Document document = processDocument(item, context);
-        String xml = document.asXML();
+            Document document = processDocument(item, context);
+            xml = document.asXML();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Processed XML:");
-            logger.debug(xml);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Processed XML:");
+                logger.debug(xml);
+            }
+        } catch (Exception e) {
+            logger.error("Unexpected error:", e);
+        } finally {
+            targetContext.destroyContext(parameters);
         }
-
-        targetContext.destroyContext(parameters);
 
         return xml;
     }

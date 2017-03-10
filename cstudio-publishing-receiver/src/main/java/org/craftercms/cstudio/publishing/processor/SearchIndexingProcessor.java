@@ -2,6 +2,8 @@ package org.craftercms.cstudio.publishing.processor;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
@@ -27,6 +29,8 @@ import java.util.Map;
  * @author avasquez
  */
 public class SearchIndexingProcessor extends AbstractPublishingProcessor {
+
+    private static final Log logger = LogFactory.getLog(SearchIndexingProcessor.class);
 
     public static final String DEFAULT_DEFAULT_INDEX_ID_FORMAT = "%s-default";
 
@@ -95,27 +99,31 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
         List<String> updatedFiles = changeSet.getUpdatedFiles();
         List<String> deletedFiles = changeSet.getDeletedFiles();
 
-        if (CollectionUtils.isNotEmpty(createdFiles)) {
-            for (BatchIndexer indexer : batchIndexers) {
-                indexer.updateIndex(indexId, siteName, contentStoreService, context, createdFiles, false, indexingStatus);
+        try {
+            if (CollectionUtils.isNotEmpty(createdFiles)) {
+                for (BatchIndexer indexer : batchIndexers) {
+                    indexer.updateIndex(indexId, siteName, contentStoreService, context, createdFiles, false, indexingStatus);
+                }
             }
-        }
-        if (CollectionUtils.isNotEmpty(updatedFiles)) {
-            for (BatchIndexer indexer : batchIndexers) {
-                indexer.updateIndex(indexId, siteName, contentStoreService, context, updatedFiles, false, indexingStatus);
+            if (CollectionUtils.isNotEmpty(updatedFiles)) {
+                for (BatchIndexer indexer : batchIndexers) {
+                    indexer.updateIndex(indexId, siteName, contentStoreService, context, updatedFiles, false, indexingStatus);
+                }
             }
-        }
-        if (CollectionUtils.isNotEmpty(deletedFiles)) {
-            for (BatchIndexer indexer : batchIndexers) {
-                indexer.updateIndex(indexId, siteName, contentStoreService, context, deletedFiles, true, indexingStatus);
+            if (CollectionUtils.isNotEmpty(deletedFiles)) {
+                for (BatchIndexer indexer : batchIndexers) {
+                    indexer.updateIndex(indexId, siteName, contentStoreService, context, deletedFiles, true, indexingStatus);
+                }
             }
-        }
 
-        if (indexingStatus.getAttemptedUpdatesAndDeletes() > 0) {
-            searchService.commit(indexId);
+            if (indexingStatus.getAttemptedUpdatesAndDeletes() > 0) {
+                searchService.commit(indexId);
+            }
+        } catch (Exception e) {
+            logger.error("Unexpected error:", e);
+        } finally {
+            targetContext.destroyContext(parameters);
         }
-
-        targetContext.destroyContext(parameters);
     }
 
     protected String getActualSiteId(Map<String, String> parameters) {

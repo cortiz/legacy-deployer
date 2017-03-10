@@ -1,6 +1,8 @@
 package org.craftercms.cstudio.publishing.processor;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.craftercms.commons.lang.RegexUtils;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
@@ -15,6 +17,8 @@ import java.util.Map;
  * @author joseross
  */
 public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
+
+    private static final Log logger = LogFactory.getLog(ExcludeByFieldValueProcessor.class);
 
     /**
      * Field to check.
@@ -48,15 +52,19 @@ public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
         ContentStoreService contentStoreService = targetContext.getContentStoreService();
         Context context = targetContext.getContext(parameters);
 
-        Item item = contentStoreService.getItem(context, file);
-        if(item != null) {
-            String fieldValue = item.queryDescriptorValue(fieldName);
-            if(StringUtils.isNotEmpty(fieldValue)) {
-                return RegexUtils.matchesAny(fieldValue, excludedValues);
+        try {
+            Item item = contentStoreService.getItem(context, file);
+            if (item != null) {
+                String fieldValue = item.queryDescriptorValue(fieldName);
+                if (StringUtils.isNotEmpty(fieldValue)) {
+                    return RegexUtils.matchesAny(fieldValue, excludedValues);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Unexpected error:", e);
+        } finally {
+            targetContext.destroyContext(parameters);
         }
-
-        targetContext.destroyContext(parameters);
 
         return false;
     }

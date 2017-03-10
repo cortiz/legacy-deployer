@@ -77,13 +77,17 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         ContentStoreService contentStoreService = targetContext.getContentStoreService();
         Context context = targetContext.getContext(parameters);
 
-        for(String levelDescriptor : levelDescriptors) {
-            String parentPath = FilenameUtils.getFullPath(levelDescriptor);
-            Item item = contentStoreService.getItem(context, parentPath);
-            addChangedChildPages(contentStoreService, context, item, updatedFiles);
+        try {
+            for (String levelDescriptor : levelDescriptors) {
+                String parentPath = FilenameUtils.getFullPath(levelDescriptor);
+                Item item = contentStoreService.getItem(context, parentPath);
+                addChangedChildPages(contentStoreService, context, item, updatedFiles);
+            }
+        } catch (Exception e) {
+            logger.error("Unexpected error:", e);
+        } finally {
+            targetContext.destroyContext(parameters);
         }
-
-        targetContext.destroyContext(parameters);
     }
 
     @Override
