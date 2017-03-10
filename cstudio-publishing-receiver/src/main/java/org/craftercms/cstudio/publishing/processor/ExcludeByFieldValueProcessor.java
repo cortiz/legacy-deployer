@@ -18,8 +18,6 @@ import java.util.Map;
  */
 public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
 
-    private static final Log logger = LogFactory.getLog(ExcludeByFieldValueProcessor.class);
-
     /**
      * Field to check.
      */
@@ -60,8 +58,6 @@ public class ExcludeByFieldValueProcessor extends AbstractExcludeProcessor {
                     return RegexUtils.matchesAny(fieldValue, excludedValues);
                 }
             }
-        } catch (Exception e) {
-            logger.error("Unexpected error:", e);
         } finally {
             targetContext.destroyContext(parameters);
         }

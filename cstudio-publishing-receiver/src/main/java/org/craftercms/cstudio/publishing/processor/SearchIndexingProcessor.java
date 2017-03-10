@@ -30,8 +30,6 @@ import java.util.Map;
  */
 public class SearchIndexingProcessor extends AbstractPublishingProcessor {
 
-    private static final Log logger = LogFactory.getLog(SearchIndexingProcessor.class);
-
     public static final String DEFAULT_DEFAULT_INDEX_ID_FORMAT = "%s-default";
 
     protected String indexId;
@@ -119,8 +117,6 @@ public class SearchIndexingProcessor extends AbstractPublishingProcessor {
             if (indexingStatus.getAttemptedUpdatesAndDeletes() > 0) {
                 searchService.commit(indexId);
             }
-        } catch (Exception e) {
-            logger.error("Unexpected error:", e);
         } finally {
             targetContext.destroyContext(parameters);
         }

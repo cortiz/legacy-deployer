@@ -83,8 +83,6 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
                 Item item = contentStoreService.getItem(context, parentPath);
                 addChangedChildPages(contentStoreService, context, item, updatedFiles);
             }
-        } catch (Exception e) {
-            logger.error("Unexpected error:", e);
         } finally {
             targetContext.destroyContext(parameters);
         }
