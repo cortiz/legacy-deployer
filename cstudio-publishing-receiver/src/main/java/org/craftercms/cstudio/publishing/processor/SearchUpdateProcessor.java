@@ -190,7 +190,6 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
 
         try {
             Item item = contentStoreService.getItem(context, fileName);
-
             Document document = processDocument(item, context);
             xml = document.asXML();
 
