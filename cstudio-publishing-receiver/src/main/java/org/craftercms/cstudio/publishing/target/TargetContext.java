@@ -1,6 +1,8 @@
 package org.craftercms.cstudio.publishing.target;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
@@ -14,6 +16,8 @@ import java.util.Map;
  * @author joseross
  */
 public class TargetContext {
+
+    private static final Log logger = LogFactory.getLog(TargetContext.class);
 
     public static final String CONTEXT_ID_PARAM = "contextId";
     public static final String SITE_PLACEHOLDER = "{siteId}";
@@ -37,6 +41,9 @@ public class TargetContext {
     }
 
     public Context getContext(Map<String, String> params) {
+        if(logger.isDebugEnabled()) {
+            logger.debug("Context requested");
+        }
         if(params.containsKey(CONTEXT_ID_PARAM)) {
             return contentStoreService.getContext(params.get(CONTEXT_ID_PARAM));
         } else {
@@ -47,6 +54,9 @@ public class TargetContext {
     }
 
     protected Context createContext(String siteName) {
+        if(logger.isDebugEnabled()) {
+            logger.debug("Context created for site " + siteName);
+        }
         String resolvedUrl = StringUtils.replace(targetFolderUrl, SITE_PLACEHOLDER, siteName);
         return contentStoreService.createContext(
             FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, resolvedUrl, false, 0,
@@ -54,6 +64,9 @@ public class TargetContext {
     }
 
     public void destroyContext(Map<String, String> params) {
+        if(logger.isDebugEnabled()) {
+            logger.debug("Context destroyed");
+        }
         if(params.containsKey(CONTEXT_ID_PARAM)) {
             Context context = contentStoreService.getContext(params.get(CONTEXT_ID_PARAM));
             contentStoreService.destroyContext(context);
