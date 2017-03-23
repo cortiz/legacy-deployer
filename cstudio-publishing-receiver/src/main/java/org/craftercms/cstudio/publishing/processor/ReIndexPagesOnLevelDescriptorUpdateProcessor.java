@@ -9,7 +9,6 @@ import org.craftercms.core.service.Item;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
-import org.craftercms.cstudio.publishing.target.TargetContext;
 import org.springframework.beans.factory.annotation.Required;
 
 import java.util.*;
@@ -27,7 +26,6 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
     protected String fileName = DEFAULT_FILE_NAME;
 
     protected PublishingProcessor actualProcessor;
-    protected TargetContext targetContext;
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
@@ -36,11 +34,6 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
     @Required
     public void setActualProcessor(PublishingProcessor actualProcessor) {
         this.actualProcessor = actualProcessor;
-    }
-
-    @Required
-    public void setTargetContext(TargetContext targetContext) {
-        this.targetContext = targetContext;
     }
 
     protected List<String> findChangedLevelDescriptors(List<String> files) {
@@ -57,8 +50,8 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         return updatedFiles;
     }
 
-    protected void addChangedChildPages(ContentStoreService contentStoreService,
-                                        Context context, Item item, List<String> updatedFiles) {
+    protected void addChangedChildPages(ContentStoreService contentStoreService, Context context, Item item,
+                                        List<String> updatedFiles) {
         if(item.isFolder()) {
             List<Item> children = contentStoreService.getChildren(context, item.getUrl());
             for(Item child : children) {
@@ -73,23 +66,19 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         }
     }
 
-    protected void addChangedChildPages(List<String> levelDescriptors, List<String> updatedFiles, Map<String, String> parameters) {
-        ContentStoreService contentStoreService = targetContext.getContentStoreService();
-        Context context = targetContext.getContext(parameters);
-
-        try {
-            for (String levelDescriptor : levelDescriptors) {
-                String parentPath = FilenameUtils.getFullPath(levelDescriptor);
-                Item item = contentStoreService.getItem(context, parentPath);
-                addChangedChildPages(contentStoreService, context, item, updatedFiles);
-            }
-        } finally {
-            targetContext.destroyContext(parameters);
+    protected void addChangedChildPages(List<String> levelDescriptors, List<String> updatedFiles,
+                                        ContentStoreService contentStoreService, Context context) {
+        for (String levelDescriptor : levelDescriptors) {
+            String parentPath = FilenameUtils.getFullPath(levelDescriptor);
+            Item item = contentStoreService.getItem(context, parentPath);
+            addChangedChildPages(contentStoreService, context, item, updatedFiles);
         }
     }
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, PublishingTarget target) throws PublishingException {
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
+                          PublishingTarget target) throws PublishingException {
+        ContentStoreService contentStoreService = target.getContentStoreService();
 
         List<String> createdFiles = changeSet.getCreatedFiles();
         List<String> updatedFiles = changeSet.getUpdatedFiles();
@@ -104,13 +93,11 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         if(!createdLevelDescriptors.isEmpty() ||
             !updatedLevelDescriptors.isEmpty() ||
             !deletedLevelDescriptors.isEmpty()) {
-
-            addChangedChildPages(createdLevelDescriptors, newUpdatedFiles, parameters);
-            addChangedChildPages(updatedLevelDescriptors, newUpdatedFiles, parameters);
-            addChangedChildPages(deletedLevelDescriptors, newUpdatedFiles, parameters);
-
+            addChangedChildPages(createdLevelDescriptors, newUpdatedFiles, contentStoreService, context);
+            addChangedChildPages(updatedLevelDescriptors, newUpdatedFiles, contentStoreService, context);
+            addChangedChildPages(deletedLevelDescriptors, newUpdatedFiles, contentStoreService, context);
         }
 
-        actualProcessor.doProcess(new PublishedChangeSet(createdFiles, newUpdatedFiles, deletedFiles), parameters, target);
+        actualProcessor.doProcess(new PublishedChangeSet(createdFiles, newUpdatedFiles, deletedFiles), parameters, context, target);
     }
 }

@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -35,8 +36,8 @@ public class CommandProcessor extends AbstractPublishingProcessor {
     protected int order = Integer.MAX_VALUE;
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet,
-                          Map<String, String> parameters, PublishingTarget target) {
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
+                          PublishingTarget target) {
         String root = target.getParameter(FileUploadServlet.CONFIG_ROOT);
         String contentFolder = target.getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER);
         root += "/" + contentFolder;

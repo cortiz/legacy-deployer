@@ -10,6 +10,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.craftercms.commons.lang.RegexUtils;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -37,7 +38,7 @@ public class OnPathMatchConditionalProcessor extends AbstractPublishingProcessor
     }
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
                           PublishingTarget target) throws PublishingException {
         List<String> createdFiles = copyFileList(changeSet.getCreatedFiles());
         List<String> updatedFiles = copyFileList(changeSet.getUpdatedFiles());
@@ -84,7 +85,7 @@ public class OnPathMatchConditionalProcessor extends AbstractPublishingProcessor
                     logger.debug("Executing publishing processor " + processor.getName() + " for " + newChangeSet);
                 }
 
-                processor.doProcess(newChangeSet, parameters, target);
+                processor.doProcess(newChangeSet, parameters, context, target);
             }
         }
     }

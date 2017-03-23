@@ -13,6 +13,7 @@ import org.apache.commons.lang.CharEncoding;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
@@ -48,7 +49,7 @@ public class SearchAttachmentWithExternalMetadataPostProcessor extends AbstractP
     }};
 
     @Override
-    public void doProcess(final PublishedChangeSet changeSet, final Map<String, String> parameters,
+    public void doProcess(final PublishedChangeSet changeSet, final Map<String, String> parameters, final Context context,
                           final PublishingTarget target) throws PublishingException {
         String root = target.getParameter(FileUploadServlet.CONFIG_ROOT);
         String contentFolder = target.getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER);

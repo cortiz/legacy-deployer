@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -39,7 +40,8 @@ public class SamplePostProcessor extends AbstractPublishingProcessor {
 	 * @see org.craftercms.cstudio.publishing.processor.PublishingProcessor#doProcess(org.craftercms.cstudio.publishing.PublishedChangeSet, java.util.Map, org.craftercms.cstudio.publishing.target.PublishingTarget)
 	 */
 	@Override
-	public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, PublishingTarget target) throws PublishingException {
+	public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
+						  PublishingTarget target) throws PublishingException {
 		if (LOGGER.isInfoEnabled()) {
 			if (changeSet != null) {
 				LOGGER.info("Printing the list of files deployed.");

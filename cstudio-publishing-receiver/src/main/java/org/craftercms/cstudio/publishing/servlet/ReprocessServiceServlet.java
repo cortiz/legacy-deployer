@@ -18,12 +18,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.processor.PublishingProcessor;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
 import org.craftercms.cstudio.publishing.target.TargetManager;
+import org.craftercms.cstudio.publishing.utils.ContextUtils;
 import org.springframework.util.MimeTypeUtils;
+
+import static org.craftercms.cstudio.publishing.servlet.FileUploadServlet.PARAM_SITE;
 
 /**
  * <p>Reindex the target site assuming that target index is clean</p>
@@ -136,8 +140,10 @@ public class ReprocessServiceServlet extends HttpServlet {
         List<String> createdFiles = new ArrayList<String>();
         this.addToList(fileRoot, "", createdFiles);
         changeSet.setCreatedFiles(createdFiles);
+
+        Context context = ContextUtils.createContext(target, parameters.get(PARAM_SITE));
         try {
-            processor.doProcess(changeSet, parameters, target);
+            processor.doProcess(changeSet, parameters, context, target);
             return HttpServletResponse.SC_OK;
         } catch (PublishingException e) {
             if (LOGGER.isErrorEnabled()) {
@@ -145,6 +151,8 @@ public class ReprocessServiceServlet extends HttpServlet {
 
             }
             return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        } finally {
+            ContextUtils.destroyContext(target, context);
         }
     }
 

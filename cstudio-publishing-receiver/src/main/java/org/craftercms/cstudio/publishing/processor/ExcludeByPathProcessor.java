@@ -2,6 +2,8 @@ package org.craftercms.cstudio.publishing.processor;
 
 import org.craftercms.commons.lang.RegexUtils;
 
+import org.craftercms.core.service.ContentStoreService;
+import org.craftercms.core.service.Context;
 import org.springframework.beans.factory.annotation.Required;
 
 import java.util.Map;
@@ -23,7 +25,7 @@ public class ExcludeByPathProcessor extends AbstractExcludeProcessor {
     }
 
     @Override
-    protected boolean excludeFile(String file, Map<String, String> parameters) {
+    protected boolean excludeFile(ContentStoreService contentStoreService, Context context, String file) {
         return RegexUtils.matchesAny(file, excludedPaths);
     }
 

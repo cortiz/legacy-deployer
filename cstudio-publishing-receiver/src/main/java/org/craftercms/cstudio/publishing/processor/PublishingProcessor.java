@@ -18,6 +18,7 @@ package org.craftercms.cstudio.publishing.processor;
 
 import java.util.Map;
 
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -39,12 +40,13 @@ public interface PublishingProcessor {
 	 * process files published
 	 * 
 	 * @param changeSet
-	 * @param parameters 
+	 * @param parameters
+	 * @param context
 	 * @param target
 	 * @throws PublishingException
 	 */
 	void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
-				   PublishingTarget target) throws PublishingException;
+				   Context context, PublishingTarget target) throws PublishingException;
 	
 	/**
 	 * get the process's name
