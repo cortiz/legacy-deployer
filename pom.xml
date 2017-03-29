@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.craftercms</groupId>
     <artifactId>crafter-studio-publishing-receiver-parent</artifactId>
-    <version>2.5.6-SNAPSHOT</version>
+    <version>2.5.6</version>
     <packaging>pom</packaging>
     <name>Crafter Studio Publishing Receiver Parent</name>
     <description>Crafter Studio Publishing Receiver</description>
