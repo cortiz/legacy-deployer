@@ -95,7 +95,10 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         List<String> updatedFiles = changeSet.getUpdatedFiles();
         List<String> deletedFiles = changeSet.getDeletedFiles();
 
-        List<String> newUpdatedFiles = new LinkedList<>(updatedFiles);
+        List<String> newUpdatedFiles = new LinkedList<>();
+        if(updatedFiles != null) {
+            newUpdatedFiles.addAll(updatedFiles);
+        }
 
         List<String> createdLevelDescriptors = findChangedLevelDescriptors(createdFiles);
         List<String> updatedLevelDescriptors = findChangedLevelDescriptors(updatedFiles);
@@ -112,5 +115,10 @@ public class ReIndexPagesOnLevelDescriptorUpdateProcessor extends AbstractPublis
         }
 
         actualProcessor.doProcess(new PublishedChangeSet(createdFiles, newUpdatedFiles, deletedFiles), parameters, target);
+    }
+
+    @Override
+    public String getName() {
+        return ReIndexPagesOnLevelDescriptorUpdateProcessor.class.getSimpleName();
     }
 }
