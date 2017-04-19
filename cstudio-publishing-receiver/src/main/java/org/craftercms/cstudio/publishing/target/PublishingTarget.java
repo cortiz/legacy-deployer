@@ -21,13 +21,10 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.craftercms.commons.lang.UrlUtils;
 import org.craftercms.core.service.ContentStoreService;
-import org.craftercms.core.service.Context;
-import org.craftercms.core.store.impl.filesystem.FileSystemContentStoreAdapter;
 import org.craftercms.cstudio.publishing.processor.PublishingProcessor;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 
@@ -37,6 +34,9 @@ import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
  * @author hyanghee
  */
 public class PublishingTarget {
+
+    private static final String URL_REGEX = "^[^:]+:.+$";
+    private static final String FILE_URL_PREFIX = "file:";
 
     private static Log LOGGER = LogFactory.getLog(PublishingTarget.class);
 
@@ -68,7 +68,7 @@ public class PublishingTarget {
     private PublishingProcessor defaultPostProcessor = null;
     private boolean defaultProcessingEnabled = false;
 
-    private String targetFolder;
+    private String targetFolderUrl;
 
     /**
      * register self
@@ -194,8 +194,8 @@ public class PublishingTarget {
     /**
      * @return the target folder
      */
-    public String getTargetFolder() {
-        return targetFolder;
+    public String getTargetFolderUrl() {
+        return targetFolderUrl;
     }
 
     /*
@@ -211,7 +211,11 @@ public class PublishingTarget {
         String root = getParameter(FileUploadServlet.CONFIG_ROOT);
         String contentFolder = getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER);
 
-        targetFolder = UrlUtils.concat(root, contentFolder);
+        targetFolderUrl = UrlUtils.concat(root, contentFolder);
+
+        if (!targetFolderUrl.matches(URL_REGEX)) {
+            targetFolderUrl = FILE_URL_PREFIX + targetFolderUrl;
+        }
     }
 
 }

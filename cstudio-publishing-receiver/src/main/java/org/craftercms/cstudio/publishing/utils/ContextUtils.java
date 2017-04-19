@@ -23,11 +23,10 @@ public class ContextUtils {
             LOGGER.debug("Context created for site " + siteName);
         }
 
-        String resolvedUrl = StringUtils.replace(target.getTargetFolder(), FileUploadServlet.PARAM_SITE, siteName);
+        String resolvedUrl = StringUtils.replace(target.getTargetFolderUrl(), "{" + FileUploadServlet.PARAM_SITE + "}", siteName);
 
-        return target.getContentStoreService().createContext(
-            FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, resolvedUrl, false, 0,
-            Context.DEFAULT_IGNORE_HIDDEN_FILES);
+        return target.getContentStoreService().createContext(FileSystemContentStoreAdapter.STORE_TYPE, null, null, null, resolvedUrl,
+                                                             false, 0, Context.DEFAULT_IGNORE_HIDDEN_FILES);
     }
 
     public static void destroyContext(PublishingTarget target, Context context) {
