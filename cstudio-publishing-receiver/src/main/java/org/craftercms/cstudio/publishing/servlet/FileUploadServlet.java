@@ -16,27 +16,37 @@
  */
 package org.craftercms.cstudio.publishing.servlet;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.StringTokenizer;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.processor.PublishingProcessor;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
 import org.craftercms.cstudio.publishing.target.TargetManager;
-import org.springframework.util.StringUtils;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.util.*;
-import java.util.Map.Entry;
+import org.craftercms.cstudio.publishing.utils.ContextUtils;
 
 /**
  * @author Dejan Brkic
@@ -204,18 +214,26 @@ public class FileUploadServlet extends HttpServlet {
 		if (target != null) {
 			synchronized (target) {
 				PublishedChangeSet changeSet = new PublishedChangeSet();
+
 				// TODO: support pre-processors in future
 				writeToTarget(parameters, files, target, changeSet);
 				deleteFromTarget(parameters, target, changeSet);
-				// run through post processors
-				if (target.isDefaultProcessingEnabled()) {
-					try {
-						target.getDefaultPostProcessor().doProcess(changeSet, parameters, target);
-					} catch (PublishingException e) {
-						LOGGER.error("Error while running a default post processor", e);
+
+				Context context = ContextUtils.createContext(target, parameters.get(PARAM_SITE));
+				try {
+					// run through post processors
+					if (target.isDefaultProcessingEnabled()) {
+						try {
+							target.getDefaultPostProcessor().doProcess(changeSet, parameters, context, target);
+						} catch (PublishingException e) {
+							LOGGER.error("Error while running a default post processor", e);
+						}
 					}
+
+					doPostProcessing(changeSet, parameters, context, target);
+				} finally {
+					ContextUtils.destroyContext(target, context);
 				}
-				doPostProcessing(changeSet, parameters, target);
 			}
 		} else {
 			throw new IOException("No configuration exists for " + paramTarget);
@@ -257,7 +275,7 @@ public class FileUploadServlet extends HttpServlet {
 				LOGGER.info("writing " + sbFullPath.toString());
 			}
             String fullPath = sbFullPath.toString();
-            if (StringUtils.hasText(site)) {
+            if (StringUtils.isNotBlank(site)) {
                 fullPath = fullPath.replaceAll(CONFIG_MULTI_TENANCY_VARIABLE, site);
             }
             File file = new File(fullPath);
@@ -312,13 +330,13 @@ public class FileUploadServlet extends HttpServlet {
 			List<String> deletedFiles = new ArrayList<String>(tokens.countTokens());
 			while (tokens.hasMoreElements()) {
 				String contentLocation = tokens.nextToken();
-				contentLocation = StringUtils.trimWhitespace(contentLocation);
+				contentLocation = StringUtils.strip(contentLocation);
 				String root = target.getParameter(CONFIG_ROOT);
 				String fullPath = root + File.separator + target.getParameter(CONFIG_CONTENT_FOLDER) + contentLocation;
 				if (LOGGER.isInfoEnabled()) {
 					LOGGER.info("deleting " + fullPath);
 				}
-                if (StringUtils.hasText(site)) {
+                if (StringUtils.isNotBlank(site)) {
                     fullPath = fullPath.replaceAll(CONFIG_MULTI_TENANCY_VARIABLE, site);
                 }
 				File file = new File(fullPath);
@@ -340,7 +358,7 @@ public class FileUploadServlet extends HttpServlet {
 				if (LOGGER.isDebugEnabled()) {
 					LOGGER.debug("deleting " + fullPath);
 				}
-                if (StringUtils.hasText(site)) {
+                if (StringUtils.isNotBlank(site)) {
                     fullPath = fullPath.replaceAll(CONFIG_MULTI_TENANCY_VARIABLE, site);
                 }
 				file = new File(fullPath);
@@ -386,7 +404,8 @@ public class FileUploadServlet extends HttpServlet {
 	 * @param parameters 
 	 * @param target
 	 */
-	protected void doPostProcessing(PublishedChangeSet changeSet, Map<String, String> parameters, PublishingTarget target) {
+	protected void doPostProcessing(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
+									PublishingTarget target) {
 		List<PublishingProcessor> postProcessors = target.getPostProcessors();
 		if (postProcessors != null) {
 			try {
@@ -394,7 +413,7 @@ public class FileUploadServlet extends HttpServlet {
 					if (LOGGER.isDebugEnabled()) {
 						LOGGER.debug("Running files through " + processor.getName());
 					}
-					processor.doProcess(changeSet, parameters, target);
+					processor.doProcess(changeSet, parameters, context, target);
 				}
 			} catch (Exception e) {
                 LOGGER.error("Error while running a post processor", e);

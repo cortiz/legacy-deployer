@@ -24,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
@@ -99,7 +100,7 @@ public class ReIndexPagesOnComponentUpdateProcessor extends AbstractPublishingPr
     }
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
                           PublishingTarget target) throws PublishingException {
         String siteName = getActualSiteId(parameters);
         String indexId = getActualIndexId(siteName);
@@ -120,12 +121,12 @@ public class ReIndexPagesOnComponentUpdateProcessor extends AbstractPublishingPr
             }
         }
 
-        doIndexing(new PublishedChangeSet(createdFiles, newUpdatedFiles, deletedFiles), parameters, target);
+        doIndexing(new PublishedChangeSet(createdFiles, newUpdatedFiles, deletedFiles), parameters, context, target);
     }
 
-    protected void doIndexing(PublishedChangeSet changeSet, Map<String, String> parameters,
+    protected void doIndexing(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
                               PublishingTarget target) throws PublishingException {
-        actualIndexingProcessor.doProcess(changeSet, parameters, target);
+        actualIndexingProcessor.doProcess(changeSet, parameters, context, target);
     }
 
     @SuppressWarnings("unchecked")

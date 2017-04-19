@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.methods.TraceMethod;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
@@ -64,7 +65,7 @@ public class HttpMethodCallPostProcessor extends AbstractPublishingProcessor {
     }
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
                           PublishingTarget target) throws PublishingException {
         String url = this.url;
         String siteId = StringUtils.isNotEmpty(siteName)? siteName: parameters.get(FileUploadServlet.PARAM_SITE);

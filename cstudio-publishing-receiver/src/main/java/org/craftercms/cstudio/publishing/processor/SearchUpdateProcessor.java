@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.craftercms.core.processors.ItemProcessor;
 import org.craftercms.core.processors.impl.FieldRenamingProcessor;
 import org.craftercms.core.processors.impl.ItemProcessorPipeline;
+import org.craftercms.core.service.Content;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
@@ -32,7 +33,6 @@ import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
-import org.craftercms.cstudio.publishing.target.TargetContext;
 import org.craftercms.search.service.SearchService;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -59,8 +59,6 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
     protected Map<String, String> fieldMappings;
     private String charEncoding = CharEncoding.UTF_8;
     protected ItemProcessor documentProcessor;
-
-    protected TargetContext targetContext;
 
     @Required
     public void setSearchService(SearchService searchService) {
@@ -104,11 +102,6 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         this.documentProcessor = documentProcessor;
     }
 
-    @Required
-    public void setTargetContext(TargetContext targetContext) {
-        this.targetContext = targetContext;
-    }
-
     @PostConstruct
     public void init() {
         if (documentProcessor == null) {
@@ -120,21 +113,22 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
 
     @Override
     public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters,
-                          PublishingTarget target) throws PublishingException {
+                          Context context, PublishingTarget target) throws PublishingException {
         String siteId = (!StringUtils.isEmpty(siteName))? siteName: parameters.get(FileUploadServlet.PARAM_SITE);
+        ContentStoreService contentStoreService = target.getContentStoreService();
 
         List<String> createdFiles = changeSet.getCreatedFiles();
         List<String> updatedFiles = changeSet.getUpdatedFiles();
         List<String> deletedFiles = changeSet.getDeletedFiles();
 
         if (CollectionUtils.isNotEmpty(createdFiles)) {
-            update(siteId, createdFiles, parameters, false);
+            update(siteId, createdFiles, context, contentStoreService, false);
         }
         if (CollectionUtils.isNotEmpty(updatedFiles)) {
-            update(siteId, updatedFiles, parameters, false);
+            update(siteId, updatedFiles, context, contentStoreService, false);
         }
         if (CollectionUtils.isNotEmpty(deletedFiles)) {
-            update(siteId, deletedFiles, parameters, true);
+            update(siteId, deletedFiles, context, contentStoreService, true);
         }
 
         searchService.commit();
@@ -151,8 +145,8 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         return chain;
     }
 
-    protected void update(String siteId, List<String> fileNames, Map<String, String> parameters,
-                          boolean delete) throws PublishingException {
+    protected void update(String siteId, List<String> fileNames, Context context,
+                          ContentStoreService contentStoreService, boolean delete) throws PublishingException {
         for (String fileName : fileNames) {
             if (fileName.endsWith(".xml")) {
                 try {
@@ -164,7 +158,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
                         }
                     } else {
                         try {
-                            String xml = processXml(fileName, parameters);
+                            String xml = processXml(fileName, context, contentStoreService);
 
                             searchService.update(siteId, fileName, xml, true);
 
@@ -183,22 +177,16 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
         }
     }
 
-    protected String processXml(String fileName, Map<String, String> parameters) throws DocumentException {
-        ContentStoreService contentStoreService = targetContext.getContentStoreService();
-        Context context = targetContext.getContext(parameters);
+    protected String processXml(String fileName, Context context, ContentStoreService contentStoreService) throws DocumentException {
         String xml;
 
-        try {
-            Item item = contentStoreService.getItem(context, fileName);
-            Document document = processDocument(item, context);
-            xml = document.asXML();
+        Item item = contentStoreService.getItem(context, fileName);
+        Document document = processDocument(item, context);
+        xml = document.asXML();
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Processed XML:");
-                logger.debug(xml);
-            }
-        } finally {
-            targetContext.destroyContext(parameters);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Processed XML:");
+            logger.debug(xml);
         }
 
         return xml;

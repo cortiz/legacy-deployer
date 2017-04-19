@@ -28,6 +28,20 @@
 
     <!-- //////////////////////////////// -->
     <!-- 								  -->
+    <!--			  Core  			  -->
+    <!-- 								  -->
+    <!-- //////////////////////////////// -->
+
+    <bean id="crafter.flatteningProcessor" class="org.craftercms.core.processors.impl.PageAwareIncludeDescriptorsProcessor">
+        <property name="includeElementXPathQuery" value="//include"/>
+        <property name="disabledIncludeNodeXPathQuery" value="../disableFlattening"/>
+        <property name="pagesPathPattern" value="^/?site/website/.*$"/>
+        <property name="includedItemsProcessor" ref="crafter.flatteningProcessor"/>
+        <property name="contentStoreService" ref="crafter.contentStoreService"/>
+    </bean>
+
+    <!-- //////////////////////////////// -->
+    <!-- 								  -->
     <!--			 Server 			  -->
     <!-- 								  -->
     <!-- //////////////////////////////// -->

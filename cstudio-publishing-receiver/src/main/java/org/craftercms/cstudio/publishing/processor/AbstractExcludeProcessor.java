@@ -3,6 +3,8 @@ package org.craftercms.cstudio.publishing.processor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.core.service.ContentStoreService;
+import org.craftercms.core.service.Context;
 import org.craftercms.cstudio.publishing.PublishedChangeSet;
 import org.craftercms.cstudio.publishing.exception.PublishingException;
 import org.craftercms.cstudio.publishing.target.PublishingTarget;
@@ -34,26 +36,28 @@ public abstract class AbstractExcludeProcessor extends AbstractPublishingProcess
      * @param file
      * @return
      */
-    protected abstract boolean excludeFile(String file, Map<String, String> parameters);
+    protected abstract boolean excludeFile(ContentStoreService contentStoreService, Context context, String file);
 
-    protected void excludeFiles(List<String> files, Map<String, String> parameters) {
+    protected void excludeFiles(ContentStoreService contentStoreService, Context context, List<String> files) {
         Iterator<String> iterator = files.iterator();
         while(iterator.hasNext()) {
             String file = iterator.next();
-            if(excludeFile(file, parameters)) {
+            if(excludeFile(contentStoreService, context, file)) {
                 iterator.remove();
             }
         }
     }
 
     @Override
-    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, PublishingTarget target) throws PublishingException {
+    public void doProcess(PublishedChangeSet changeSet, Map<String, String> parameters, Context context,
+                          PublishingTarget target) throws PublishingException {
+        ContentStoreService contentStoreService = target.getContentStoreService();
         List<String> createdFiles = copyFileList(changeSet.getCreatedFiles());
         List<String> updatedFiles = copyFileList(changeSet.getUpdatedFiles());
         List<String> deletedFiles = copyFileList(changeSet.getDeletedFiles());
 
-        excludeFiles(createdFiles, parameters);
-        excludeFiles(updatedFiles, parameters);
+        excludeFiles(contentStoreService, context, createdFiles);
+        excludeFiles(contentStoreService, context, updatedFiles);
         // The file is already deleted so there is nothing to check...
         //excludeFiles(deletedFiles, parameters);
 
@@ -70,13 +74,12 @@ public abstract class AbstractExcludeProcessor extends AbstractPublishingProcess
                 logger.debug("Executing publishing processor " + actualProcessor.getName() + " for " + newChangeSet);
             }
 
-            actualProcessor.doProcess(newChangeSet, parameters, target);
-
+            actualProcessor.doProcess(newChangeSet, parameters, context, target);
         }
-
     }
 
     protected List<String> copyFileList(List<String> files) {
         return CollectionUtils.isNotEmpty(files)? new ArrayList<>(files) : Collections.<String>emptyList();
     }
+
 }
