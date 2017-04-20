@@ -134,8 +134,12 @@ public class ReprocessServiceServlet extends HttpServlet {
         sbFullPath.append(File.separator);
         sbFullPath.append(target.getParameter(FileUploadServlet.CONFIG_CONTENT_FOLDER));
         String fileRoot = sbFullPath.toString();
+        String site = parameters.get(FileUploadServlet.PARAM_SITE);
+        if(StringUtils.isNotEmpty(site)) {
+            fileRoot = fileRoot.replaceAll(FileUploadServlet.CONFIG_MULTI_TENANCY_VARIABLE, site);
+        }
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Root location: " + sbFullPath.toString());
+            LOGGER.info("Root location: " + fileRoot);
         }
         List<String> createdFiles = new ArrayList<String>();
         this.addToList(fileRoot, "", createdFiles);
