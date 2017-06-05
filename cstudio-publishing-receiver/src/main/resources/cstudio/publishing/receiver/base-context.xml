@@ -239,7 +239,6 @@
 	
     <bean id="TargetManager" class="org.craftercms.cstudio.publishing.target.TargetManager"/>
 
-
 	<import resource="classpath*:conf/*-target-context.xml" />
 
 </beans>
