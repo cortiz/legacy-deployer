@@ -69,9 +69,4 @@ public class SearchUpdateFlattenXmlProcessor extends SearchUpdateProcessor {
         return super.createDocumentProcessorChain(chain);
     }
 
-    @Override
-    public String getName() {
-        return SearchUpdateFlattenXmlProcessor.class.getSimpleName();
-    }
-
 }
