@@ -20,7 +20,6 @@
 				<entry key="metadataFolder"><value>metadata</value></entry>
 			</map>
 		</property>
-		<property name="contentStoreService" ref="crafter.contentStoreService"/>
 	</bean>
 
 	<bean id="SampleSearchService"

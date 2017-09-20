@@ -19,7 +19,6 @@
                 <entry key="metadataFolder"><value>metadata/wem-projects/{siteId}/{siteId}/work-area</value></entry>
             </map>
         </property>
-        <property name="contentStoreService" ref="crafter.contentStoreService"/>
     </bean>
 
     <bean id="PreviewSearchService"

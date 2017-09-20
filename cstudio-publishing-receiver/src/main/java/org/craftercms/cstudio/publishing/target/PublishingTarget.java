@@ -27,6 +27,7 @@ import org.craftercms.commons.lang.UrlUtils;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.cstudio.publishing.processor.PublishingProcessor;
 import org.craftercms.cstudio.publishing.servlet.FileUploadServlet;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * publishing target
@@ -129,6 +130,7 @@ public class PublishingTarget {
     /**
      * @param contentStoreService the content store service to set
      */
+    @Autowired
     public void setContentStoreService(ContentStoreService contentStoreService) {
         this.contentStoreService = contentStoreService;
     }
