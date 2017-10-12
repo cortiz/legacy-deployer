@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.craftercms.core.processors.ItemProcessor;
 import org.craftercms.core.processors.impl.IncludeDescriptorsProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @deprecated replaced by {@link SearchIndexingProcessor}
@@ -28,43 +29,28 @@ import org.craftercms.core.processors.impl.IncludeDescriptorsProcessor;
 @Deprecated
 public class SearchUpdateFlattenXmlProcessor extends SearchUpdateProcessor {
 
-    protected String includeElementXPathQuery;
-    protected String disableFlatteningElement;
-
-    private boolean disableNestedPageFlattening;
-
-    public String getIncludeElementXPathQuery() {
-        return includeElementXPathQuery;
-    }
-
-    public String getDisableFlatteningElement() {
-        return disableFlatteningElement;
-    }
+    private IncludeDescriptorsProcessor includeDescriptorsProcessor;
 
     public void setIncludeElementXPathQuery(String includeElementXPathQuery) {
-        this.includeElementXPathQuery = includeElementXPathQuery;
+        // Ignore, we're using the injected IncludeDescriptorsProcessor
     }
 
     public void setDisableFlatteningElement(String disableFlatteningElement) {
-        this.disableFlatteningElement = disableFlatteningElement;
+        // Ignore, we're using the injected IncludeDescriptorsProcessor
     }
 
-    public void setDisableNestedPageFlattening(final boolean disableNestedPageFlattening) {
-        this.disableNestedPageFlattening = disableNestedPageFlattening;
+    public void setDisableNestedPageFlattening(boolean disableNestedPageFlattening) {
+        // Ignore, we're using the injected IncludeDescriptorsProcessor
+    }
+
+    @Autowired
+    public void setIncludeDescriptorsProcessor(IncludeDescriptorsProcessor includeDescriptorsProcessor) {
+        this.includeDescriptorsProcessor = includeDescriptorsProcessor;
     }
 
     @Override
     protected List<ItemProcessor> createDocumentProcessorChain(List<ItemProcessor> chain) {
-        IncludeDescriptorsProcessor processor = new IncludeDescriptorsProcessor();
-
-        if (StringUtils.isNotEmpty(includeElementXPathQuery)) {
-            processor.setIncludeElementXPathQuery(includeElementXPathQuery);
-        }
-        if (StringUtils.isNotEmpty(disableFlatteningElement)) {
-            processor.setDisabledIncludeNodeXPathQuery(disableFlatteningElement);
-        }
-
-        chain.add(processor);
+        chain.add(includeDescriptorsProcessor);
 
         return super.createDocumentProcessorChain(chain);
     }
