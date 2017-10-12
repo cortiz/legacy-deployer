@@ -109,14 +109,18 @@ public class SearchAttachmentProcessor extends AbstractPublishingProcessor {
 
     private void update(String siteId, String root, List<String> fileList, boolean isDelete) throws IOException {
         for (String fileName : fileList) {
-            String mimeType = null;
-            File file = new File(root + fileName);
-            MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-            mimeType = mimeTypesMap.getContentType(fileName);
-            if (supportedMimeTypes.contains(mimeType) && !isDelete) {
-                searchService.updateDocument(siteId, fileName, file);
-            } else if (isDelete) {
-                searchService.delete(siteId, fileName);
+            try {
+                String mimeType = null;
+                File file = new File(root + fileName);
+                MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+                mimeType = mimeTypesMap.getContentType(fileName);
+                if (supportedMimeTypes.contains(mimeType) && !isDelete) {
+                    searchService.updateDocument(siteId, fileName, file);
+                } else if (isDelete) {
+                    searchService.delete(siteId, fileName);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to send update of file " + siteId + ":" + fileName, e);
             }
         }
     }
