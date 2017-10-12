@@ -16,6 +16,11 @@
  */
 package org.craftercms.cstudio.publishing.processor;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.CharEncoding;
@@ -25,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
 import org.craftercms.core.processors.ItemProcessor;
 import org.craftercms.core.processors.impl.FieldRenamingProcessor;
 import org.craftercms.core.processors.impl.ItemProcessorPipeline;
-import org.craftercms.core.service.Content;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
@@ -37,11 +41,6 @@ import org.craftercms.search.service.SearchService;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Required;
-
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Processor to update the Crafter Search engine index.
