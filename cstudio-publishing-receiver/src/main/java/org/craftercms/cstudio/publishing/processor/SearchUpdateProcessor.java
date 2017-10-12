@@ -171,7 +171,7 @@ public class SearchUpdateProcessor extends AbstractPublishingProcessor {
                         }
                     }
                 } catch (Exception e) {
-                    throw new PublishingException(e);
+                    logger.error("Failed to send update of file " + siteId + ":" + fileName, e);
                 }
             }
         }

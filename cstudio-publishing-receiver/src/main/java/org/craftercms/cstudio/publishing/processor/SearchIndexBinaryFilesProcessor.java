@@ -84,14 +84,17 @@ public class SearchIndexBinaryFilesProcessor extends AbstractPublishingProcessor
         }
     }
 
-    private void update(String siteId, String root, List<String> fileList, boolean isDelete)
-            throws IOException {
+    private void update(String siteId, String root, List<String> fileList, boolean isDelete) throws IOException {
         for (String fileName : fileList) {
-            File file = new File(root + fileName);
-            if (isDelete) {
-                searchService.delete(siteId, fileName);
-            } else {
-                searchService.updateDocument(siteId, fileName, file);
+            try {
+                File file = new File(root + fileName);
+                if (isDelete) {
+                    searchService.delete(siteId, fileName);
+                } else {
+                    searchService.updateDocument(siteId, fileName, file);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to send update of file " + siteId + ":" + fileName, e);
             }
         }
     }
