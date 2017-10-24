@@ -44,6 +44,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.xml.sax.SAXException;
 
 /**
  * <p>A post processor that sends email with the content published</p>
@@ -165,6 +166,13 @@ public class EmailProcessor extends AbstractPublishingProcessor {
         try {
             SAXReader reader = new SAXReader();
             reader.setEncoding(getCharEncoding());
+            try {
+                reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            }catch (SAXException ex){
+                LOGGER.error("Unable to turn off external entity loading, This could be a security risk.", ex);
+            }
             Document document = reader.read(root + file);
             Element rootEl = document.getRootElement();
             String sendEmailFlag = rootEl.valueOf(getSendEmailFlagPath());

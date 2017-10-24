@@ -23,6 +23,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.xml.sax.SAXException;
 
 /**
  * @deprecated replaced by {@link SearchIndexingProcessor}
@@ -91,6 +92,13 @@ public class SearchAttachmentWithExternalMetadataPostProcessor extends AbstractP
                         }
                         SAXReader reader = new SAXReader();
                         try {
+                            reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                            reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                            reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                        }catch (SAXException ex){
+                            logger.error("Unable to turn off external entity loading, This could be a security risk.", ex);
+                        }
+                        try {
                             Document document = reader.read(file);
                             updateIndexPath = getAttachmentPath(document);
                             if (StringUtils.isNotBlank(updateIndexPath)) {
@@ -123,7 +131,7 @@ public class SearchAttachmentWithExternalMetadataPostProcessor extends AbstractP
                 } else if (searchIndexUpdate) {
                     if (logger.isDebugEnabled()) {
                         logger.debug(String.format("Sending search update request for file %s [%s] for site %s", updateIndexPath,
-                                                   filePath, siteId));
+                                filePath, siteId));
 
                     }
                     searchService.updateDocument(siteId, updateIndexPath, file, externalProperties);
@@ -245,7 +253,7 @@ public class SearchAttachmentWithExternalMetadataPostProcessor extends AbstractP
             for (String substitutionKey : tokenizeSubstitutionMap.keySet()) {
                 if (elemName.endsWith(substitutionKey)) {
                     String newElementName = elemName.substring(0, elemName.length() - substitutionKey.length()) +
-                                            tokenizeSubstitutionMap.get(substitutionKey);
+                            tokenizeSubstitutionMap.get(substitutionKey);
                     if (logger.isDebugEnabled()) {
                         logger.debug("Adding new element for tokenized search: " + newElementName);
                     }
